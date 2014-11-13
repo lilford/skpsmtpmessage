@@ -494,6 +494,25 @@ NSString *kSKPSMTPPartContentTransferEncodingKey = @"kSKPSMTPPartContentTransfer
                             [self startShortWatchdog];
                         }
                     }
+                    else if ([tmpLine hasPrefix:@"250 PIPELINING"])
+                    {
+                        NSLog(@"Server responded with PIPELINING");
+                        
+                        sendState = kSKPSMTPWaitingFromReply;
+                        
+                        NSString *mailFrom = [NSString stringWithFormat:@"MAIL FROM:<%@>\r\n", fromEmail];
+                        NSLog(@"C: %@", mailFrom);
+                        if (CFWriteStreamWriteFully((CFWriteStreamRef)outputStream, (const uint8_t *)[mailFrom UTF8String], [mailFrom lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) < 0)
+                        {
+                            error =  [outputStream streamError];
+                            encounteredError = YES;
+                        }
+                        else
+                        {
+                            [self startShortWatchdog];
+                        }
+                        
+                    }
                     else if ([tmpLine hasPrefix:@"250 "])
                     {
                         if (self.requiresAuth)
